@@ -1,0 +1,19 @@
+<svg width="800" height="800" xmlns="http://www.w3.org/2000/svg">
+  <!-- North Sikkim (Blue) - Realistic uneven edges -->
+  <path d="M120 100 L130 90 L125 80 L135 70 L130 60 L140 50 L150 95 L165 85 L180 105 L195 90 L210 95 L225 85 L240 105 L255 90 L270 95 L300 105 L330 95 L360 105 L390 95 L420 105 L450 95 L480 105 L510 95 L540 105 L570 95 L600 105 L630 95 L660 105 L680 100 L690 120 L685 140 L695 160 L685 180 L695 200 L685 220 L695 240 L685 260 L695 280 L685 300 L695 320 L685 340 L695 360 L685 380 L680 400 L650 410 L640 430 L620 450 L600 470 L580 485 L560 500 L540 510 L520 520 L500 530 L480 540 L460 545 L440 550 L420 555 L400 560 L380 555 L360 550 L340 545 L320 540 L300 530 L280 520 L260 510 L240 500 L220 480 L200 460 L180 440 L160 420 L140 410 L120 400 Z" fill="#6495ED" stroke="#2c3e50" stroke-width="2" />
+  
+  <!-- West Sikkim (Green) -->
+  <path d="M160 400 L240 500 L320 540 L320 600 L300 660 L260 700 L200 740 L160 700 L160 400Z" fill="#2ecc71" stroke="#2c3e50" stroke-width="2" />
+  
+  <!-- East Sikkim (Blue) -->
+  <path d="M480 540 L560 500 L680 400 L680 700 L560 740 L480 700 L440 660 L400 640 L360 600 L400 560 L480 540Z" fill="#3498db" stroke="#2c3e50" stroke-width="2" />
+  
+  <!-- South Sikkim (Orange) -->
+  <path d="M320 540 L400 560 L360 600 L400 640 L440 660 L480 700 L440 760 L360 800 L300 780 L260 740 L260 700 L300 660 L320 600 L320 540Z" fill="#f39c12" stroke="#2c3e50" stroke-width="2" />
+  
+  <!-- Labels with improved visibility -->
+  <text x="400" y="240" text-anchor="middle" fill="#fff" font-size="28" font-weight="bold" stroke="#2c3e50" stroke-width="1" paint-order="stroke">North Sikkim</text>
+  <text x="200" y="600" text-anchor="middle" fill="#fff" font-size="28" font-weight="bold" stroke="#2c3e50" stroke-width="1" paint-order="stroke">West Sikkim</text>
+  <text x="560" y="600" text-anchor="middle" fill="#fff" font-size="28" font-weight="bold" stroke="#2c3e50" stroke-width="1" paint-order="stroke">East Sikkim</text>
+  <text x="400" y="700" text-anchor="middle" fill="#fff" font-size="28" font-weight="bold" stroke="#2c3e50" stroke-width="1" paint-order="stroke">South Sikkim</text>
+</svg>

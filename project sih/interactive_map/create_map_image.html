@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Map of Sikkim</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .map-container {
+            position: relative;
+            width: 100%;
+            height: 500px;
+            overflow: hidden;
+            border-radius: 8px;
+        }
+        
+        .sikkim-svg {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+        }
+        
+        .district-tooltip {
+            position: absolute;
+            background-color: rgba(44, 62, 80, 0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            pointer-events: none;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            max-width: 200px;
+            line-height: 1.4;
+        }
+        
+        .map-controls {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 100;
+        }
+        
+        .control-btn {
+            background-color: #1f2937;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
+        }
+        
+        .control-btn:hover {
+            background-color: #374151;
+        }
+        
+        .zoom-controls {
+            display: flex;
+            gap: 4px;
+        }
+        
+        .district {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .district:hover {
+            filter: brightness(1.1);
+        }
+        
+        .district-highlight {
+            filter: brightness(1.2) drop-shadow(0 0 4px rgba(0,0,0,0.3));
+            transform: scale(1.02);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen p-4">
+    <div class="max-w-6xl mx-auto">
+        <!-- Card Container -->
+        <div class="bg-white rounded-xl shadow-xl overflow-hidden">
+            <!-- Card Header -->
+            <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4">
+                <h1 class="text-2xl font-bold text-white">Interactive Map of Sikkim</h1>
+                <p class="text-indigo-100 mt-1">Explore the four districts of Sikkim with their unique attractions and cultural heritage</p>
+            </div>
+            
+            <!-- Card Body -->
+            <div class="p-6">
+                <!-- Map Container -->
+                <div class="map-container bg-gray-50 border border-gray-200">
+                    <object id="sikkim-svg" data="sikkim_map.svg" type="image/svg+xml" class="sikkim-svg"></object>
+                    
+                    <!-- Map Controls -->
+                    <div class="map-controls">
+                        <div class="zoom-controls">
+                            <button class="control-btn" id="zoom-in" title="Zoom In">+</button>
+                            <button class="control-btn" id="zoom-out" title="Zoom Out">-</button>
+                        </div>
+                        <button class="control-btn" id="reset-view" title="Reset View">Reset</button>
+                    </div>
+                </div>
+                
+                <!-- District Legend -->
+                <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="flex items-center space-x-3 p-3 bg-red-50 rounded-lg hover:bg-red-100 transition-colors cursor-pointer" data-district="north">
+                        <div class="w-4 h-4 bg-red-500 rounded-full"></div>
+                        <div>
+                            <div class="font-semibold text-gray-800">North Sikkim</div>
+                            <div class="text-sm text-gray-600">High-altitude wonderland</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer" data-district="east">
+                        <div class="w-4 h-4 bg-blue-500 rounded-full"></div>
+                        <div>
+                            <div class="font-semibold text-gray-800">East Sikkim</div>
+                            <div class="text-sm text-gray-600">Cultural heart & capital</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3 p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors cursor-pointer" data-district="west">
+                        <div class="w-4 h-4 bg-green-500 rounded-full"></div>
+                        <div>
+                            <div class="font-semibold text-gray-800">West Sikkim</div>
+                            <div class="text-sm text-gray-600">Biodiversity & trekking</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3 p-3 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors cursor-pointer" data-district="south">
+                        <div class="w-4 h-4 bg-yellow-500 rounded-full"></div>
+                        <div>
+                            <div class="font-semibold text-gray-800">South Sikkim</div>
+                            <div class="text-sm text-gray-600">Terraced fields & monasteries</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- District Info Panel -->
+                <div class="mt-6 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-6" id="district-info">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">Welcome to Sikkim</h3>
+                    <p class="text-gray-600 leading-relaxed">
+                        Hover over any district on the map or click the legend items to discover unique attractions, 
+                        culture, and natural wonders. Sikkim offers breathtaking landscapes from snow-capped peaks to lush valleys.
+                    </p>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                        <div class="text-center p-4 bg-white rounded-lg shadow-sm">
+                            <div class="text-2xl font-bold text-indigo-600">4</div>
+                            <div class="text-sm text-gray-600">Districts</div>
+                        </div>
+                        <div class="text-center p-4 bg-white rounded-lg shadow-sm">
+                            <div class="text-2xl font-bold text-indigo-600">8,848m</div>
+                            <div class="text-sm text-gray-600">Highest Peak</div>
+                        </div>
+                        <div class="text-center p-4 bg-white rounded-lg shadow-sm">
+                            <div class="text-2xl font-bold text-indigo-600">7,096 km²</div>
+                            <div class="text-sm text-gray-600">Total Area</div>
+                        </div>
+                        <div class="text-center p-4 bg-white rounded-lg shadow-sm">
+                            <div class="text-2xl font-bold text-indigo-600">610,577</div>
+                            <div class="text-sm text-gray-600">Population</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // District data
+        const districtData = {
+            north: {
+                name: "North Sikkim",
+                color: "#ef4444",
+                description: "The largest and most sparsely populated district, North Sikkim is a high-altitude wonderland featuring glaciers, alpine lakes, and the majestic Kanchenjunga.",
+                attractions: ["Gurudongmar Lake", "Yumthang Valley", "Zero Point", "Lachung", "Lachen", "Rhododendron Sanctuary"],
+                altitude: "1,200 - 8,586m",
+                area: "4,226 km²",
+                headquarters: "Mangan",
+                highlights: "Home to the sacred Gurudongmar Lake and the Valley of Flowers (Yumthang). This district offers some of the most pristine mountain landscapes in India."
+            },
+            east: {
+                name: "East Sikkim",
+                color: "#3b82f6",
+                description: "The commercial and cultural heart of Sikkim, East Sikkim houses the capital Gangtok and offers a perfect blend of urban sophistication and natural beauty.",
+                attractions: ["Gangtok City", "Tsomgo Lake", "Nathula Pass", "Rumtek Monastery", "Hanuman Tok", "Ban Jhakri Falls"],
+                altitude: "280 - 8,586m",
+                area: "954 km²",
+                headquarters: "Gangtok",
+                highlights: "Capital city with modern amenities, historic monasteries, and the famous Tsomgo Lake. Gateway to the India-China border at Nathula Pass."
+            },
+            west: {
+                name: "West Sikkim",
+                color: "#10b981",
+                description: "Known for its rich biodiversity and trekking trails, West Sikkim offers spectacular views of Kanchenjunga and houses the famous Pelling town.",
+                attractions: ["Pelling", "Khecheopalri Lake", "Yuksom", "Dzongri Trek", "Kanchenjunga Falls", "Rabdentse Ruins"],
+                altitude: "700 - 8,586m",
+                area: "1,166 km²",
+                headquarters: "Gyalshing",
+                highlights: "Adventure hub with numerous trekking routes. Yuksom is the base for Goechala trek and was the first capital of Sikkim."
+            },
+            south: {
+                name: "South Sikkim",
+                color: "#f59e0b",
+                description: "The most densely populated district featuring terraced fields, ancient monasteries, and the historic town of Namchi with its giant statues.",
+                attractions: ["Namchi", "Char Dham", "Samdruptse Statue", "Tendong Hill", "Ravangla", "Buddha Park"],
+                altitude: "280 - 6,000m",
+                area: "750 km²",
+                headquarters: "Namchi",
+                highlights: "Religious tourism center with the towering Guru Padmasambhava statue and Char Dham replica. Rich in Lepcha and Bhutia culture."
+            }
+        };
+
+        // Create tooltip element
+        const tooltip = document.createElement('div');
+        tooltip.className = 'district-tooltip';
+        tooltip.style.display = 'none';
+        document.body.appendChild(tooltip);
+
+        // Update district info panel
+        function updateDistrictInfo(districtKey) {
+            const info = districtData[districtKey];
+            const infoPanel = document.getElementById('district-info');
+            
+            infoPanel.innerHTML = `
+                <h3 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                    <div class="w-5 h-5 rounded-full mr-3" style="background-color: ${info.color}"></div>
+                    ${info.name}
+                </h3>
+                <p class="text-gray-600 leading-relaxed mb-4">${info.description}</p>
+                
+                <div class="mb-4">
+                    <h4 class="font-semibold text-gray-800 mb-2">Key Attractions</h4>
+                    <div class="flex flex-wrap gap-2">
+                        ${info.attractions.map(attraction => 
+                            `<span class="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm">${attraction}</span>`
+                        ).join('')}
+                    </div>
+                </div>
+                
+                <p class="text-gray-600 mb-4"><strong>Highlights:</strong> ${info.highlights}</p>
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="text-center p-4 bg-white rounded-lg shadow-sm">
+                        <div class="text-lg font-bold text-indigo-600">${info.altitude}</div>
+                        <div class="text-sm text-gray-600">Altitude Range</div>
+                    </div>
+                    <div class="text-center p-4 bg-white rounded-lg shadow-sm">
+                        <div class="text-lg font-bold text-indigo-600">${info.area}</div>
+                        <div class="text-sm text-gray-600">Area</div>
+                    </div>
+                    <div class="text-center p-4 bg-white rounded-lg shadow-sm">
+                        <div class="text-lg font-bold text-indigo-600">${info.headquarters}</div>
+                        <div class="text-sm text-gray-600">Headquarters</div>
+                    </div>
+                    <div class="text-center p-4 bg-white rounded-lg shadow-sm">
+                        <div class="text-lg font-bold text-indigo-600">${info.attractions.length}</div>
+                        <div class="text-sm text-gray-600">Major Attractions</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Highlight district on map
+        function highlightDistrict(districtKey, event) {
+            const svgObject = document.getElementById('sikkim-svg');
+            const svgDoc = svgObject.contentDocument;
+            
+            if (!svgDoc) return;
+            
+            // Reset all districts
+            const allPaths = svgDoc.querySelectorAll('path');
+            allPaths.forEach(path => {
+                path.classList.remove('district-highlight');
+            });
+            
+            // Highlight selected district
+            let districtIndex;
+            switch(districtKey) {
+                case 'north': districtIndex = 0; break;
+                case 'west': districtIndex = 1; break;
+                case 'east': districtIndex = 2; break;
+                case 'south': districtIndex = 3; break;
+                default: return;
+            }
+            
+            const districtPath = allPaths[districtIndex];
+            if (districtPath) {
+                districtPath.classList.add('district-highlight');
+            }
+            
+            // Update info panel
+            updateDistrictInfo(districtKey);
+            
+            // Show tooltip
+            if (event) {
+                const district = districtData[districtKey];
+                tooltip.innerHTML = `
+                    <strong>${district.name}</strong><br>
+                    Area: ${district.area}<br>
+                    Headquarters: ${district.headquarters}
+                `;
+                tooltip.style.display = 'block';
+                
+                const rect = svgObject.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+                
+                tooltip.style.left = `${x + 15}px`;
+                tooltip.style.top = `${y + 15}px`;
+            }
+        }
+
+        // Setup SVG interaction
+        function setupSvgInteraction() {
+            const svgObject = document.getElementById('sikkim-svg');
+            const svgDoc = svgObject.contentDocument;
+            
+            if (!svgDoc) {
+                setTimeout(setupSvgInteraction, 100);
+                return;
+            }
+            
+            const svgElement = svgDoc.querySelector('svg');
+            let isDragging = false;
+            let startX, startY;
+            let viewBox = { x: 0, y: 0, width: 800, height: 800 };
+            let currentScale = 1;
+            
+            svgElement.setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`);
+            
+            // Zoom functionality
+            svgObject.addEventListener('wheel', function(e) {
+                e.preventDefault();
+                
+                const mouseX = e.offsetX;
+                const mouseY = e.offsetY;
+                
+                const svgPoint = {
+                    x: viewBox.x + (mouseX / svgObject.clientWidth) * viewBox.width,
+                    y: viewBox.y + (mouseY / svgObject.clientHeight) * viewBox.height
+                };
+                
+                const zoomFactor = e.deltaY > 0 ? 1.1 : 0.9;
+                currentScale *= zoomFactor;
+                
+                if (currentScale < 0.5) currentScale = 0.5;
+                if (currentScale > 5) currentScale = 5;
+                
+                const newWidth = 800 / currentScale;
+                const newHeight = 800 / currentScale;
+                
+                viewBox.x = svgPoint.x - (mouseX / svgObject.clientWidth) * newWidth;
+                viewBox.y = svgPoint.y - (mouseY / svgObject.clientHeight) * newHeight;
+                viewBox.width = newWidth;
+                viewBox.height = newHeight;
+                
+                svgElement.setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`);
+            });
+            
+            // Pan functionality
+            svgObject.addEventListener('mousedown', function(e) {
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                svgObject.style.cursor = 'grabbing';
+            });
+            
+            svgObject.addEventListener('mousemove', function(e) {
+                if (!isDragging) return;
+                
+                const dx = (e.clientX - startX) * (viewBox.width / svgObject.clientWidth);
+                const dy = (e.clientY - startY) * (viewBox.height / svgObject.clientHeight);
+                
+                viewBox.x -= dx;
+                viewBox.y -= dy;
+                
+                svgElement.setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`);
+                
+                startX = e.clientX;
+                startY = e.clientY;
+            });
+            
+            svgObject.addEventListener('mouseup', function() {
+                isDragging = false;
+                svgObject.style.cursor = 'grab';
+            });
+            
+            svgObject.addEventListener('mouseleave', function() {
+                isDragging = false;
+                svgObject.style.cursor = 'grab';
+            });
+            
+            svgObject.style.cursor = 'grab';
+            
+            // Add click events to SVG paths
+            const paths = svgDoc.querySelectorAll('path');
+            paths.forEach((path, index) => {
+                let districtKey;
+                switch(index) {
+                    case 0: districtKey = 'north'; break;
+                    case 1: districtKey = 'west'; break;
+                    case 2: districtKey = 'east'; break;
+                    case 3: districtKey = 'south'; break;
+                }
+                
+                if (districtKey) {
+                    path.style.cursor = 'pointer';
+                    path.addEventListener('mouseenter', (event) => highlightDistrict(districtKey, event));
+                    path.addEventListener('click', (event) => highlightDistrict(districtKey, event));
+                    path.addEventListener('mouseleave', () => {
+                        tooltip.style.display = 'none';
+                    });
+                }
+            });
+        }
+
+        // Initialize when SVG loads
+        document.getElementById('sikkim-svg').addEventListener('load', setupSvgInteraction);
+
+        // Add event listeners for legend items
+        document.querySelectorAll("[data-district]").forEach((item) => {
+            item.addEventListener("mouseenter", (event) => {
+                const districtKey = item.getAttribute("data-district");
+                highlightDistrict(districtKey, event);
+            });
+
+            item.addEventListener("click", (event) => {
+                const districtKey = item.getAttribute("data-district");
+                highlightDistrict(districtKey, event);
+            });
+            
+            item.addEventListener("mouseleave", () => {
+                tooltip.style.display = 'none';
+            });
+        });
+
+        // Map controls
+        document.getElementById('zoom-in').addEventListener('click', function() {
+            const svgObject = document.getElementById('sikkim-svg');
+            const svgDoc = svgObject.contentDocument;
+            if (!svgDoc) return;
+            
+            const svgElement = svgDoc.querySelector('svg');
+            let viewBox = svgElement.viewBox.baseVal;
+            
+            const centerX = viewBox.x + viewBox.width / 2;
+            const centerY = viewBox.y + viewBox.height / 2;
+            
+            const newWidth = viewBox.width * 0.8;
+            const newHeight = viewBox.height * 0.8;
+            
+            const newX = centerX - newWidth / 2;
+            const newY = centerY - newHeight / 2;
+            
+            svgElement.setAttribute('viewBox', `${newX} ${newY} ${newWidth} ${newHeight}`);
+        });
+
+        document.getElementById('zoom-out').addEventListener('click', function() {
+            const svgObject = document.getElementById('sikkim-svg');
+            const svgDoc = svgObject.contentDocument;
+            if (!svgDoc) return;
+            
+            const svgElement = svgDoc.querySelector('svg');
+            let viewBox = svgElement.viewBox.baseVal;
+            
+            const centerX = viewBox.x + viewBox.width / 2;
+            const centerY = viewBox.y + viewBox.height / 2;
+            
+            const newWidth = viewBox.width * 1.2;
+            const newHeight = viewBox.height * 1.2;
+            
+            if (newWidth > 1200) return;
+            
+            const newX = centerX - newWidth / 2;
+            const newY = centerY - newHeight / 2;
+            
+            svgElement.setAttribute('viewBox', `${newX} ${newY} ${newWidth} ${newHeight}`);
+        });
+
+        document.getElementById('reset-view').addEventListener('click', function() {
+            const svgObject = document.getElementById('sikkim-svg');
+            const svgDoc = svgObject.contentDocument;
+            if (!svgDoc) return;
+            
+            const svgElement = svgDoc.querySelector('svg');
+            svgElement.setAttribute('viewBox', '0 0 800 800');
+        });
+    </script>
+</body>
+</html>
+
